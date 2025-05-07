@@ -9,10 +9,18 @@ use std::fs::{self,
     //metadata, 
     //File
 };
-use crate::lib_1;
+
+//use std::fs::read_to_string;
+use crate::lib_1::{self, Dictionary};
+
+use regex::Regex;
 
 
+pub fn read_books() ->Vec<lib_1::Books> {
+    let sa:Vec<lib_1::Books>=Vec::new();
 
+    return sa
+}
 
 //Чтение файлов
 //1 - книги, 2 - словари
@@ -48,6 +56,11 @@ pub fn read_catalogs() -> (Vec<lib_1::Books>, Vec<String>) {
     }
        // let _s1=books_vec[i].replace(".", ""));
         //let _name=_s1.replace();
+        /*let mut _str_vec:Vec<String>= Vec::new();
+        for line in read_to_string(&books_vec[i]).unwrap().lines() {
+            //вложение строк файла .spd в вектор
+            _str_vec.push(line.to_string())
+        }*/
         let _str_vec=read_utf8(&books_vec[i]); //чтение файла в UTF-8
         //вложение
         let _time_struct = lib_1::Books {
@@ -149,3 +162,4 @@ pub fn system_pause() {
     use std::process::Command;
     let _ = Command::new("cmd.exe").arg("/c").arg("pause").status();
 }
+
