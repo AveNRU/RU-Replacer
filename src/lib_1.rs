@@ -4,4 +4,5 @@ pub struct Books {
     pub path: String, //путь до книги
     pub name: String, //имя книги
     pub content: Vec<String>, //содержимое
+    pub format: String,//формат
 }

@@ -1,12 +1,14 @@
 ﻿use std::io::{//self, 
-    BufRead, BufReader, Error, Read, //Write
+    BufRead, BufReader,// Error, 
+    Read, //Write
 };
 use encoding_rs::WINDOWS_1251;
 use encoding_rs_io::DecodeReaderBytesBuilder;
-use std::path::Path;
+//use std::path::Path;
 use std::fs::{self, 
     //metadata, 
-    File};
+    //File
+};
 use crate::lib_1;
 
 
@@ -52,6 +54,7 @@ pub fn read_catalogs() -> (Vec<lib_1::Books>, Vec<String>) {
             content: _str_vec,//содержимое книги
             path: books_vec[i].clone(),//путь полный
             name: books_vec[i].clone(),//имя книги
+            format: "rtf".to_string(),
         };
         _book_struct.push(_time_struct);
         }
