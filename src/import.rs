@@ -9,11 +9,16 @@ use std::fs::{self,
     //metadata, 
     //File
 };
-
 //use std::fs::read_to_string;
 use crate::lib_1::{self, Dictionary};
+use lazy_static::lazy_static;
+//use std::collections::HashMap;
 
 use regex::Regex;
+lazy_static! {
+    static ref re_file_extension: Regex = Regex::new(r"(?:\.)+([\d\w&&[^\.]]+)$").unwrap();//расширение файла
+    static ref re_file_name: Regex = Regex::new(r"\.\\*/*books\\*/*(.+)\.(?:[\d\w&&[^\.]]+)").unwrap();//расширение файла
+}
 
 
 pub fn read_books() ->Vec<lib_1::Books> {
@@ -54,6 +59,28 @@ pub fn read_catalogs() -> (Vec<lib_1::Books>, Vec<String>) {
         Ok(_) => (),
         Err(_) => panic!("Файл {} не существует!: ",&books_vec[i]),
     }
+        //расширение файла
+        let mut _extension:String=String::new();
+        //получение расширения файла
+        if let Some(extension) =re_file_extension.captures(&books_vec[i]) {
+            //присвоение расширения
+            _extension=extension[1].trim().to_string();
+            //если не удалось получить расширенеи файла
+        } else {
+            panic!("Не удалось выдрать расширение файла: {}",&books_vec[i]);
+        }
+        //имя файла
+        let mut _filename:String=String::new();
+        //получение расширения файла
+        if let Some(extension) =re_file_name.captures(&books_vec[i]) {
+            //присвоение расширения
+            _filename=extension[1].trim().to_string();
+            //если не удалось получить расширенеи файла
+        } else {
+            panic!("Не удалось выдрать имя файла: {}",&books_vec[i]);
+        }
+        //println!("сама книга: {}",&books_vec[i]);
+        //println!("Расширение: {}",& _extension);
        // let _s1=books_vec[i].replace(".", ""));
         //let _name=_s1.replace();
         /*let mut _str_vec:Vec<String>= Vec::new();
@@ -66,8 +93,8 @@ pub fn read_catalogs() -> (Vec<lib_1::Books>, Vec<String>) {
         let _time_struct = lib_1::Books {
             content: _str_vec,//содержимое книги
             path: books_vec[i].clone(),//путь полный
-            name: books_vec[i].clone(),//имя книги
-            format: "rtf".to_string(),
+            name: _filename,//имя книги
+            format: _extension,
         };
         _book_struct.push(_time_struct);
         }
