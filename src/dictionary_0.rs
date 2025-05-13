@@ -1,4 +1,4 @@
-﻿use std::default;
+﻿//use std::default;
 
 use crate::lib_1::{self, 
     Dictionary
@@ -17,7 +17,7 @@ let mut books_struct_changed: Vec<lib_1::Books> = Vec::new();
 //изначальные слова одиночные
 let mut single_word:Vec<String>=Vec::new();
 //изначальные слова сложные
-let mut comples_word:Vec<String>=Vec::new();
+let mut _complex_word:Vec<String>=Vec::new();
 //одиночные слова Regex
 let mut re_single:Vec<Regex> = Vec::new();
 //одиночные слова Regex

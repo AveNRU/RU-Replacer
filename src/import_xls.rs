@@ -33,6 +33,8 @@ pub fn import_dictionary(dictionary_path_vec:&Vec<String>) ->Vec<lib_1::Dictiona
         //получение значения последней ячейки (строка)
         let last_row = main_words.get_size().0;
         println!("Последняя строка в словаре: {}", &last_row);
+        // для сравнения
+        let mut _all_word_find_vec:Vec<String>=Vec::new();
         //куда образцы слов вкладываются
         let mut _word_find_vec:Vec<String>=Vec::new();
         //куда замены вставляются
@@ -41,9 +43,12 @@ pub fn import_dictionary(dictionary_path_vec:&Vec<String>) ->Vec<lib_1::Dictiona
         for k in 0..last_row {
             //запрос на слово искомое в строке
             let word_1 = xlsx_row_value(&main_words, k, 0 as usize);
-           
+            //запрос на слово замены в строке
+            let word_2 = xlsx_row_value(&main_words, k, 1 as usize);
             //вложение искомого слова
             if !word_1.is_empty() {
+                //вложение в общий список для сравнения
+                _all_word_find_vec.push(word_1.clone());
                 //println!("изначально{}",&word_1);
                 //все буквы нижние
                 let _s_lowercase:String=word_1.to_case(Case::Lower);
@@ -55,10 +60,11 @@ pub fn import_dictionary(dictionary_path_vec:&Vec<String>) ->Vec<lib_1::Dictiona
                 _word_find_vec.push(_s_lowercase);
                 //вложение когда 1-я буква заглавная
                 _word_find_vec.push(_s_sentence);
+            } else {
+                  if !word_2.is_empty() { println!("Ячейка в словаре искомых слов пустая, её номер: {}, но ячейка со словом-заменой содержит не пустое значение ",k);}
             }
             
-            //запрос на слово замены в строке
-            let word_2 = xlsx_row_value(&main_words, k, 1 as usize);
+           
             //вложение замены
             if !word_2.is_empty() {
                  //1-я буква нижняя
@@ -71,7 +77,22 @@ pub fn import_dictionary(dictionary_path_vec:&Vec<String>) ->Vec<lib_1::Dictiona
                 _word_change_vec.push(_s_lowercase);
                 //вложение когда 1-я буква заглавная
                 _word_change_vec.push(_s_sentence);
+            } else {
+                 if !word_1.is_empty() {  println!("Ячейка в словаре замен пустая, её номер: {} , но ячейка с искомым словом содержит не пустое значение",k);}
             }
+        }
+        //поиск уже добавленных слов
+        for i in 0.._all_word_find_vec.len() {
+            //второй круговорот
+            for j in i+1.._all_word_find_vec.len() {
+                if _all_word_find_vec[i].as_str()==_all_word_find_vec[j].as_str() {
+                    println!("слово в словаре: |{}| уже добавлено. Номер строки 1){i} , 2){j}",&_all_word_find_vec[i]);
+                }
+            }
+        }
+        //проверка что количество слов равно
+        if _word_find_vec!=_word_change_vec {
+            println!("Не равно количество слов искомых: {} и замен: {}",_word_find_vec.len(),_word_change_vec.len());
         }
         //если это 1 страница
         //if j==0 {
