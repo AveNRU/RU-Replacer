@@ -76,9 +76,9 @@ pub fn import_dictionary(dictionary_path_vec:&Vec<String>) ->Vec<lib_1::Dictiona
         //если это 1 страница
         //if j==0 {
             //вложение искомых слов
-            _dictionary.single.push(_word_find_vec);
+            _dictionary.single.extend(_word_find_vec);
             //вложение замены
-            _dictionary.single.push(_word_change_vec);
+            _dictionary.change_single.extend(_word_change_vec);
        // }
    // }
     //

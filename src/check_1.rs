@@ -12,6 +12,7 @@ pub fn check_file_exists_1() {
             "./book".to_string(),
             "./dictionary".to_string(),
             "./end".to_string(),
+            "./end/dictionary".to_string(),
         ],
         //пустой изначально для хранения пустых черт
         vec![],
