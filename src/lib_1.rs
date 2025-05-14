@@ -21,6 +21,9 @@ pub struct Dictionary {
     pub complex: Vec<String>,        //сложные и составные
     pub re_complex: Vec<Regex>,      //сложные и составные Regex
     pub change_complex: Vec<String>, //сложные и составные
+    pub complex_first: Vec<String>,        //сложные и составные (в 1 очередь)
+    pub re_complex_first: Vec<Regex>,      //сложные и составные Regex (в 1 очередь)
+    pub change_complex_first: Vec<String>, //сложные и составные (в 1 очередь)
     pub everywhere: Vec<String>,        //сложные и составные
     pub re_everywhere: Vec<Regex>,      //сложные и составные Regex
     pub change_everywhere: Vec<String>, //сложные и составные

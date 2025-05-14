@@ -57,7 +57,7 @@ pub fn excel_dictionary_write(
     // Create a new Excel file object.
     let mut workbook = Workbook::new();
     // Add a worksheet to the workbook.
-    let worksheet = workbook.add_worksheet();
+    let worksheet = workbook.add_worksheet().set_name("Простые слова")?;
     worksheet.write(0, 0, "Изначальные слова")?;
     worksheet.write(0, 1, "Regex")?;
     worksheet.write(0, 2, "Замена")?;
@@ -158,7 +158,7 @@ pub fn excel_dictionary_write(
         }
     }
 
-    //2-я страница с составными словами
+    //3-я страница с составными словами
     let mut binding2 = Worksheet::new();
     let everywhere = binding2.set_name("Вездесущие слова")?;
     everywhere.write(0, 0, "Изначальные слова")?;
@@ -176,16 +176,16 @@ pub fn excel_dictionary_write(
             && _dictionary[i].everywhere.len() == _dictionary[i].change_everywhere.len()
         {
             println!(
-                "длина словаря (сложного) : {}",
+                "длина словаря (вездесущего) : {}",
                 _dictionary[i].everywhere.len()
             );
         }
         //если длина словаря не равна
         else {
-            println!("длина слов сложных: {}", _dictionary[i].everywhere.len());
-            println!("длина слов re_сложных: {}", _dictionary[i].re_everywhere.len());
+            println!("длина слов вездесущих: {}", _dictionary[i].everywhere.len());
+            println!("длина слов re_вездесущих: {}", _dictionary[i].re_everywhere.len());
             println!(
-                "длина слов замен (сложных): {}",
+                "длина слов замен (вездесущих): {}",
                 _dictionary[i].change_everywhere.len()
             );
         }
@@ -211,13 +211,69 @@ pub fn excel_dictionary_write(
         }
     }
 
+    //составные в 1 очередь
+
+    //3-я страница с составными словами
+    let mut binding3 = Worksheet::new();
+    let complex_first = binding3.set_name("Составные слова (в 1 очередь)")?;
+    complex_first.write(0, 0, "Изначальные слова")?;
+    complex_first.write(0, 1, "Regex")?;
+    complex_first.write(0, 2, "Замена")?;
+    complex_first.write(0, 3, "Количество случаев")?;
+    complex_first.write(0, 4, "Строка")?;
+    //complex_first.write(0, 5, "Ток потребления")?;
+    //complex_first.write(0, 6, "Цепь земли (по умолчанию)")?;
+    let mut _row_point: u32 = u32::try_from(1).unwrap().into();
+    //let column_point: u16 = u16::try_from(i + 1).unwrap().into();
+    //перебор всех словарей
+    for i in 0.._dictionary.len() {
+        if _dictionary[i].complex_first.len() == _dictionary[i].re_complex_first.len()
+            && _dictionary[i].complex_first.len() == _dictionary[i].change_complex_first.len()
+        {
+            println!(
+                "длина словаря (сложного (в 1 очередь) )  : {}",
+                _dictionary[i].complex_first.len()
+            );
+        }
+        //если длина словаря не равна
+        else {
+            println!("длина слов сложных (в 1 очередь): {}", _dictionary[i].complex_first.len());
+            println!("длина слов re_сложных (в 1 очередь): {}", _dictionary[i].re_complex_first.len());
+            println!(
+                "длина слов замен (сложных (в 1 очередь)): {}",
+                _dictionary[i].change_complex_first.len()
+            );
+        }
+        //перебор одиночных слов
+        for j in 0.._dictionary[i].complex_first.len() {
+            complex_first.write(_row_point, 0, _dictionary[i].complex_first[j].clone())?;
+            _row_point += 1;
+            //println!("{}",&_dictionary[i].complex_first[j]);
+        }
+        //обнуление указателя
+        let mut _row_point: u32 = u32::try_from(1).unwrap().into();
+        //вывод regex
+        for j in 0.._dictionary[i].re_complex_first.len() {
+            complex_first.write(_row_point, 1, _dictionary[i].re_complex_first[j].to_string())?;
+            _row_point += 1;
+        }
+        //обнуление указателя
+        let mut _row_point: u32 = u32::try_from(1).unwrap().into();
+        //вывод regex
+        for j in 0.._dictionary[i].change_complex_first.len() {
+            complex_first.write(_row_point, 2, _dictionary[i].change_complex_first[j].to_string())?;
+            _row_point += 1;
+        }
+    }
     //путь сохранения
     let _path: String = format!("./end/2.xlsx",);
     complex.autofit();
     everywhere.autofit();
     worksheet.autofit();
+    complex_first.autofit();
     workbook.push_worksheet(binding);
     workbook.push_worksheet(binding2);
+    workbook.push_worksheet(binding3);
     workbook.save(_path)?;
     Ok(())
 }

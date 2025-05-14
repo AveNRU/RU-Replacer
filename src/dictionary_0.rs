@@ -34,6 +34,12 @@ pub fn change_words_in_books(
     //замена - множественные
     let mut change_everywhere_word: Vec<String> = Vec::new();
 
+     //изначальные слова сложные
+    let mut complex_first_word: Vec<String> = Vec::new();
+    //составные слова Regex
+    let mut re_complex_first: Vec<Regex> = Vec::new();
+    //замена - множественные
+    let mut change_complex_first_word: Vec<String> = Vec::new();
     //случаи замены слов
     let mut _change_result: lib_1::ChangeWordsSuccess = { Default::default() };
     //создание словаря regex
@@ -59,6 +65,16 @@ pub fn change_words_in_books(
             //вложение замен
             change_complex_word.push(dictionary_lib[i].change_complex[j].clone());
         }
+
+         //составные слова (в 1 очередь)
+        for j in 0..dictionary_lib[i].complex_first.len() {
+            //вложение в вектор искомых слов
+            re_complex_first.push(dictionary_lib[i].re_complex_first[j].clone());
+            //вложение в вектор изначальных слов
+            complex_first_word.push(dictionary_lib[i].complex_first[j].clone());
+            //вложение замен
+            change_complex_first_word.push(dictionary_lib[i].change_complex_first[j].clone());
+        }
         //простые слова
         //перебор искомых слов под замену
         for j in 0..dictionary_lib[i].single.len() {
@@ -80,11 +96,21 @@ pub fn change_words_in_books(
         //перебор всего содержимого
 
 
-        //сначала меняются 1)вездесущие; 2)сложные слова 3)простые
+        //сначала меняются 1)составные (в 1 очередь), 2)вездесущие; 3)сложные слова 4)простые
         for j in 0.._time_content.len() {
             //перебор искомых слов в виде RegEx
 
-            //вездеущие слова
+            //сложные  слова
+            for k in 0..re_complex_first.len() {
+                if re_complex_first[k].is_match(&_time_content[j]) {
+                    //вложение замены во временную переменную
+                    let _s: std::borrow::Cow<'_, str> =
+                        re_complex_first[k].replace_all(&_time_content[j], &change_complex_first_word[k]);
+                    _time_content[j] = _s.to_string();
+                }
+            }
+
+            //вездесущие слова
             for k in 0..re_everywhere.len() {
                 if re_everywhere[k].is_match(&_time_content[j]) {
                     //вложение замены во временную переменную

@@ -233,7 +233,6 @@ pub fn import_dictionary(dictionary_path_vec: &Vec<String>) -> Vec<lib_1::Dictio
                 workbook.worksheet_range(&third_list_name);
 
             //открытие 3 страницы книги
-            //открытие страницы j
             let everywhere_words: calamine::Range<Data> =
                 third_list.expect("не получилось открыть третью (3) страницу в файле .xlsx ");
             //получение значения последней ячейки (строка)
@@ -324,6 +323,107 @@ pub fn import_dictionary(dictionary_path_vec: &Vec<String>) -> Vec<lib_1::Dictio
             // }
         }
 
+
+           //четвертый лист
+        let mut four_list_name: String = String::new();
+        //если больше или равно чем 4 страницы
+        if name_vec_sheets.len() >= 3 {
+            four_list_name = name_vec_sheets[3].clone(); //имя 4 страницы
+        }
+        //если не пустое имя страницы
+        if !four_list_name.is_empty() {
+            //получение страницы
+            let four_list: Result<calamine::Range<Data>, calamine::XlsxError> =
+                workbook.worksheet_range(&four_list_name);
+
+            //открытие 4 страницы книги
+            let everywhere_words: calamine::Range<Data> =
+                four_list.expect("не получилось открыть (4 стр) страницу в файле .xlsx ");
+            //получение значения последней ячейки (строка)
+            let last_row = everywhere_words.get_size().0;
+            println!("Последняя строка на (4 стр) странице в словаре: {}", &last_row);
+            // для сравнения
+            let mut _all_word_find_vec: Vec<String> = Vec::new();
+            //куда образцы слов вкладываются
+            let mut _word_find_vec: Vec<String> = Vec::new();
+            //куда замены вставляются
+            let mut _word_change_vec: Vec<String> = Vec::new();
+            //перебор всех слов
+            for k in 0..last_row {
+                //запрос на слово искомое в строке
+                let word_1 = xlsx_row_value(&everywhere_words, k, 0 as usize);
+                //запрос на слово замены в строке
+                let word_2 = xlsx_row_value(&everywhere_words, k, 1 as usize);
+                //вложение искомого слова
+                if !word_1.is_empty() {
+                    //вложение в общий список для сравнения
+                    _all_word_find_vec.push(word_1.clone());
+                    //println!("изначально{}",&word_1);
+                    //все буквы нижние
+                    let _s_lowercase: String = word_1.to_case(Case::Lower);
+                    //println!("нижний : {}",&_s_lowercase);
+                    //1-я буква заглавная
+                    let _s_sentence: String = word_1.to_case(Case::Sentence);
+                    //println!("заголовок: {}",&_s_sentence);
+                    //вложение когда все буквы нижние
+                    _word_find_vec.push(_s_lowercase);
+                    //вложение когда 1-я буква заглавная
+                    _word_find_vec.push(_s_sentence);
+                } else {
+                    if !word_2.is_empty() {
+                        println!(
+                            "Ячейка в словаре (4 стр) искомых слов пустая, её номер: {}, но ячейка со словом-заменой содержит не пустое значение ",
+                            k
+                        );
+                    }
+                }
+                //вложение замены
+                if !word_2.is_empty() {
+                    //1-я буква нижняя
+                    let _s_lowercase: String = word_2.to_case(Case::Lower);
+                    //println!("нижний : {}",&_s_lowercase);
+                    //1-я буква заглавная
+                    let _s_sentence: String = word_2.to_case(Case::Sentence);
+                    //println!("заголовок: {}",&_s_sentence);
+                    //вложение когда все буквы нижние
+                    _word_change_vec.push(_s_lowercase);
+                    //вложение когда 1-я буква заглавная
+                    _word_change_vec.push(_s_sentence);
+                } else {
+                    if !word_1.is_empty() {
+                        println!(
+                            "Ячейка в словаре (4 стр) замен пустая, её номер: {} , но ячейка с искомым словом содержит не пустое значение",
+                            k
+                        );
+                    }
+                }
+            }
+            //поиск уже добавленных слов
+            for i in 0.._all_word_find_vec.len() {
+                //четвертый круговорот
+                for j in i + 1.._all_word_find_vec.len() {
+                    if _all_word_find_vec[i].as_str() == _all_word_find_vec[j].as_str() {
+                        println!(
+                            "слово в словаре (4 стр): |{}| уже добавлено. Номер строки 1){i} , 2){j}",
+                            &_all_word_find_vec[i]
+                        );
+                    }
+                }
+            }
+            //проверка что количество слов равно
+            if _word_find_vec.len() != _word_change_vec.len() {
+                println!(
+                    "Не равно количество слов (4 стр) искомых: {} и замен: {}",
+                    _word_find_vec.len(),
+                    _word_change_vec.len()
+                );
+            }
+            //вложение искомых слов
+            _dictionary.complex_first.extend(_word_find_vec);
+            //вложение замены
+            _dictionary.change_complex_first.extend(_word_change_vec);
+            // }
+        }
         //вложение в общую стопку
         _dictionary_vec.push(_dictionary);
     }
@@ -351,7 +451,7 @@ pub fn add_re_word_to_dictionary(
         //составные слова
         for j in 0..dictionary_lib[i].complex.len() {
             //создание временной строки для искомого слова в соответствии с Regex требованиями (начало и конец слова должен быть)
-            let _s: String = format!(r#"\<{}\>"#, dictionary_lib[i].complex[j].clone());
+            let _s: String = format!(r#"({})"#, dictionary_lib[i].complex[j].clone());
             //создание Regex
             let _re_time: Regex = Regex::new(&_s).unwrap();
             //вложение в вектор искомых слов
@@ -366,7 +466,16 @@ pub fn add_re_word_to_dictionary(
             //вложение в вектор искомых слов
             dictionary_lib[i].re_everywhere.push(_re_time);
         }
-        //вывод его
+        //составные слова
+        for j in 0..dictionary_lib[i].complex_first.len() {
+            //создание временной строки для искомого слова в соответствии с Regex требованиями (начало и конец слова должен быть)
+            let _s: String = format!(r#"({})"#, dictionary_lib[i].complex_first[j].clone());
+            //создание Regex
+            let _re_time: Regex = Regex::new(&_s).unwrap();
+            //вложение в вектор искомых слов
+            dictionary_lib[i].re_complex_first.push(_re_time);
+        }
+        //вывод словаря
         let _ = write::excel_dictionary_write(&dictionary_lib);
     }
 
