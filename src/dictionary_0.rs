@@ -100,7 +100,7 @@ pub fn change_words_in_books(
         for j in 0.._time_content.len() {
             //перебор искомых слов в виде RegEx
 
-            //сложные  слова
+            //сложные  слова (в 1 очередь)
             for k in 0..re_complex_first.len() {
                 if re_complex_first[k].is_match(&_time_content[j]) {
                     //вложение замены во временную переменную
