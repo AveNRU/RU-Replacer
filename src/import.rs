@@ -1,16 +1,20 @@
-﻿use std::io::{//self, 
-    BufRead, BufReader,// Error, 
-    Read, //Write
-};
 use encoding_rs::WINDOWS_1251;
 use encoding_rs_io::DecodeReaderBytesBuilder;
+use std::io::{
+    //self,
+    BufRead,
+    BufReader, // Error,
+    Read,      //Write
+};
 //use std::path::Path;
-use std::fs::{self, 
-    //metadata, 
+use std::fs::{
+    self,
+    //metadata,
     //File
 };
 //use std::fs::read_to_string;
-use crate::lib_1::{self, 
+use crate::lib_1::{
+    self,
     //Dictionary
 };
 use lazy_static::lazy_static;
@@ -22,100 +26,96 @@ lazy_static! {
     static ref re_file_name: Regex = Regex::new(r"\.\\*/*books\\*/*(.+)\.(?:[\d\w&&[^\.]]+)").unwrap();//расширение файла
 }
 
+pub fn read_books() -> Vec<lib_1::Books> {
+    let sa: Vec<lib_1::Books> = Vec::new();
 
-pub fn read_books() ->Vec<lib_1::Books> {
-    let sa:Vec<lib_1::Books>=Vec::new();
-
-    return sa
+    return sa;
 }
 
 //Чтение файлов
 //1 - книги, 2 - словари
 pub fn read_catalogs() -> (Vec<lib_1::Books>, Vec<String>) {
-    use std::fs::{self, 
-        //metadata, 
-        File
+    use std::fs::{
+        self,
+        //metadata,
+        File,
     };
     //основной путь
-    let mut main_path:String=String::new();
+    let mut main_path: String = String::new();
     //получение значение корневого доступа к скрипту (где он лежит, как решила ОС)
     let _ = file_full_path_env(&mut main_path);
-        let mut _book_struct :Vec<lib_1::Books>=Vec::new();
-         //файлы книг
-        let books_vec = fs::read_dir("./books/")
-            .unwrap()
-            .filter_map(|e| e.ok())
-            .map(|e| e.path().to_string_lossy().into_owned())
-            .collect::<Vec<_>>();
-        //словари
-        let dictionary_vec = fs::read_dir("./dictionary/")
-            .unwrap()
-            .filter_map(|e| e.ok())
-            .map(|e| e.path().to_string_lossy().into_owned())
-            .collect::<Vec<_>>();
-        for i in 0..books_vec.len() {
-            //открытие файла с библиотекой
+    let mut _book_struct: Vec<lib_1::Books> = Vec::new();
+    //файлы книг
+    let books_vec = fs::read_dir("./books/")
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .map(|e| e.path().to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    //словари
+    let dictionary_vec = fs::read_dir("./dictionary/")
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .map(|e| e.path().to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    for i in 0..books_vec.len() {
+        //открытие файла с библиотекой
         let result = File::open(&books_vec[i]);
         //проверка итога открытия
-    match result {
-        Ok(_) => (),
-        Err(_) => panic!("Файл {} не существует!: ",&books_vec[i]),
-    }
+        match result {
+            Ok(_) => (),
+            Err(_) => panic!("Файл {} не существует!: ", &books_vec[i]),
+        }
         //расширение файла
-        let mut _extension:String=String::new();
+        let mut _extension: String = String::new();
         //получение расширения файла
-        if let Some(extension) =re_file_extension.captures(&books_vec[i]) {
+        if let Some(extension) = re_file_extension.captures(&books_vec[i]) {
             //присвоение расширения
-            _extension=extension[1].trim().to_string();
+            _extension = extension[1].trim().to_string();
             //если не удалось получить расширенеи файла
         } else {
-            panic!("Не удалось выдрать расширение файла: {}",&books_vec[i]);
+            panic!("Не удалось выдрать расширение файла: {}", &books_vec[i]);
         }
         //имя файла
-        let mut _filename:String=String::new();
+        let mut _filename: String = String::new();
         //получение расширения файла
-        if let Some(extension) =re_file_name.captures(&books_vec[i]) {
+        if let Some(extension) = re_file_name.captures(&books_vec[i]) {
             //присвоение расширения
-            _filename=extension[1].trim().to_string();
+            _filename = extension[1].trim().to_string();
             //если не удалось получить расширенеи файла
         } else {
-            panic!("Не удалось выдрать имя файла: {}",&books_vec[i]);
+            panic!("Не удалось выдрать имя файла: {}", &books_vec[i]);
         }
         //println!("сама книга: {}",&books_vec[i]);
         //println!("Расширение: {}",& _extension);
-       // let _s1=books_vec[i].replace(".", ""));
+        // let _s1=books_vec[i].replace(".", ""));
         //let _name=_s1.replace();
         /*let mut _str_vec:Vec<String>= Vec::new();
         for line in read_to_string(&books_vec[i]).unwrap().lines() {
             //вложение строк файла .spd в вектор
             _str_vec.push(line.to_string())
         }*/
-        let _str_vec=read_utf8(&books_vec[i]); //чтение файла в UTF-8
+        let _str_vec = read_utf8(&books_vec[i]); //чтение файла в UTF-8
         //вложение
         let _time_struct = lib_1::Books {
-            content: _str_vec,//содержимое книги
-            path: books_vec[i].clone(),//путь полный
-            name: _filename,//имя книги
+            content: _str_vec,          //содержимое книги
+            path: books_vec[i].clone(), //путь полный
+            name: _filename,            //имя книги
             format: _extension,
         };
         _book_struct.push(_time_struct);
-        }
+    }
     return (_book_struct, dictionary_vec);
 }
 
-
 //получение пути до корня со скриптом в ОС
-pub fn file_full_path_env(sivkov_path:&mut String) -> std::io::Result<()> {
+pub fn file_full_path_env(sivkov_path: &mut String) -> std::io::Result<()> {
     use std::env;
     let path = env::current_dir()?;
     //println!("The current directory is {}", path.display());
-    *sivkov_path=path.into_os_string().into_string().unwrap();
+    *sivkov_path = path.into_os_string().into_string().unwrap();
     //println!("Итог пути: {}",&s);
     Ok(())
 }
-
-
-
 
 //чтение файла в UTF-8
 pub fn read_utf8(rpt_path: &String) -> Vec<String> {
@@ -191,4 +191,3 @@ pub fn system_pause() {
     use std::process::Command;
     let _ = Command::new("cmd.exe").arg("/c").arg("pause").status();
 }
-

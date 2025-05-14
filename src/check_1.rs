@@ -1,11 +1,10 @@
-﻿
-
 pub fn check_file_exists_1() {
-    use std::path::Path;
-    use std::fs::{self, 
+    use std::fs::{
+        self,
         //metadata, File
-        };
-     //двумерный вектор. 1-й для хранения прямых путей, 2 - после пути добавляется косая черта / (linux)
+    };
+    use std::path::Path;
+    //двумерный вектор. 1-й для хранения прямых путей, 2 - после пути добавляется косая черта / (linux)
     let mut path_vec: Vec<Vec<String>> = vec![
         vec![
             //test
@@ -25,7 +24,7 @@ pub fn check_file_exists_1() {
         for j in 0..path_vec[i].len() {
             //проверка наличия папок
             if !Path::new(path_vec[i][j].as_str()).exists() {
-                let _ =fs::create_dir(path_vec[i][j].as_str()); // создаем папку
+                let _ = fs::create_dir(path_vec[i][j].as_str()); // создаем папку
             }
             //чтение содержимого папки
             match fs::read_dir(path_vec[i][j].as_str()) {
