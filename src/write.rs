@@ -1,4 +1,4 @@
-﻿//use std::fs::read_to_string;
+//use std::fs::read_to_string;
 use crate::lib_1;
 use encoding_rs::{
     WINDOWS_1251,
@@ -16,7 +16,7 @@ pub fn write_book(book_struct: &Vec<lib_1::Books>) -> Result<(), Error> {
     for i in 0..book_struct.len() {
         //путь до вывода
         //let path = format!("./end/{}.{}",i,book_struct[i].format);
-        let path = format!("./end/{}.{}", i, book_struct[i].format);
+        let path = format!("./end/{}.{}", book_struct[i].name, book_struct[i].format);
         //указание на вывод
         let mut output = File::create(path)?;
         //вывод книги
@@ -31,7 +31,9 @@ pub fn write_book(book_struct: &Vec<lib_1::Books>) -> Result<(), Error> {
                     println!("Были ошибки декодирования");
                 }
                 output.write_all(&windows1251_bytes)?;
-            } else {
+            } 
+            //если не RTF расширение
+            else {
                 writeln!(output, "{}", line)?;
             }
         }
@@ -183,7 +185,10 @@ pub fn excel_dictionary_write(
         //если длина словаря не равна
         else {
             println!("длина слов вездесущих: {}", _dictionary[i].everywhere.len());
-            println!("длина слов re_вездесущих: {}", _dictionary[i].re_everywhere.len());
+            println!(
+                "длина слов re_вездесущих: {}",
+                _dictionary[i].re_everywhere.len()
+            );
             println!(
                 "длина слов замен (вездесущих): {}",
                 _dictionary[i].change_everywhere.len()
@@ -206,7 +211,11 @@ pub fn excel_dictionary_write(
         let mut _row_point: u32 = u32::try_from(1).unwrap().into();
         //вывод regex
         for j in 0.._dictionary[i].change_everywhere.len() {
-            everywhere.write(_row_point, 2, _dictionary[i].change_everywhere[j].to_string())?;
+            everywhere.write(
+                _row_point,
+                2,
+                _dictionary[i].change_everywhere[j].to_string(),
+            )?;
             _row_point += 1;
         }
     }
@@ -237,8 +246,14 @@ pub fn excel_dictionary_write(
         }
         //если длина словаря не равна
         else {
-            println!("длина слов сложных (в 1 очередь): {}", _dictionary[i].complex_first.len());
-            println!("длина слов re_сложных (в 1 очередь): {}", _dictionary[i].re_complex_first.len());
+            println!(
+                "длина слов сложных (в 1 очередь): {}",
+                _dictionary[i].complex_first.len()
+            );
+            println!(
+                "длина слов re_сложных (в 1 очередь): {}",
+                _dictionary[i].re_complex_first.len()
+            );
             println!(
                 "длина слов замен (сложных (в 1 очередь)): {}",
                 _dictionary[i].change_complex_first.len()
@@ -254,19 +269,27 @@ pub fn excel_dictionary_write(
         let mut _row_point: u32 = u32::try_from(1).unwrap().into();
         //вывод regex
         for j in 0.._dictionary[i].re_complex_first.len() {
-            complex_first.write(_row_point, 1, _dictionary[i].re_complex_first[j].to_string())?;
+            complex_first.write(
+                _row_point,
+                1,
+                _dictionary[i].re_complex_first[j].to_string(),
+            )?;
             _row_point += 1;
         }
         //обнуление указателя
         let mut _row_point: u32 = u32::try_from(1).unwrap().into();
         //вывод regex
         for j in 0.._dictionary[i].change_complex_first.len() {
-            complex_first.write(_row_point, 2, _dictionary[i].change_complex_first[j].to_string())?;
+            complex_first.write(
+                _row_point,
+                2,
+                _dictionary[i].change_complex_first[j].to_string(),
+            )?;
             _row_point += 1;
         }
     }
     //путь сохранения
-    let _path: String = format!("./end/2.xlsx",);
+    let _path: String = format!("./end/Общий словарь.xlsx",);
     complex.autofit();
     everywhere.autofit();
     worksheet.autofit();

@@ -1,4 +1,3 @@
-
 use crate::lib_1::{self, Dictionary};
 use crate::write::{self};
 use calamine::{Data, Reader, Xlsx, open_workbook};
@@ -6,12 +5,24 @@ use convert_case::{Case, Casing};
 use regex::Regex;
 //загрузка словаря
 pub fn import_dictionary(dictionary_path_vec: &Vec<String>) -> Vec<lib_1::Dictionary> {
+    //имя словаря вырезать
+    let re_name_dictionary = Regex::new(r"(?i)([\d\w]+)\.(?:([\d\w_-]+))$").unwrap();
     //итоговая стопка
     let mut _dictionary_vec: Vec<lib_1::Dictionary> = Vec::new();
     for i in 0..dictionary_path_vec.len() {
+        //пустая строка под имя словаря
+        let mut _name_dictionary:String=String::new();
+        if let Some(caps) = re_name_dictionary.captures(&&dictionary_path_vec[i]) {
+                _name_dictionary = caps[1].trim().to_string();
+                //println!("refdes1");
+            } else {
+                _name_dictionary=format!("Словарь_№_{}",i);
+            }
+
         //пустая стопка
         let mut _dictionary: lib_1::Dictionary = Dictionary {
             path: dictionary_path_vec[i].clone(), //путь
+            name:_name_dictionary,
             ..Default::default()
         };
         //начало
@@ -43,74 +54,23 @@ pub fn import_dictionary(dictionary_path_vec: &Vec<String>) -> Vec<lib_1::Dictio
         let mut _word_change_vec: Vec<String> = Vec::new();
         //перебор всех слов
         for k in 0..last_row {
-            //запрос на слово искомое в строке
-            let word_1 = xlsx_row_value(&main_words, k, 0 as usize);
-            //запрос на слово замены в строке
-            let word_2 = xlsx_row_value(&main_words, k, 1 as usize);
-            //вложение искомого слова
-            if !word_1.is_empty() {
-                //вложение в общий список для сравнения
-                _all_word_find_vec.push(word_1.clone());
-                //println!("изначально{}",&word_1);
-                //все буквы нижние
-                let _s_lowercase: String = word_1.to_case(Case::Lower);
-                //println!("нижний : {}",&_s_lowercase);
-                //1-я буква заглавная
-                let _s_sentence: String = word_1.to_case(Case::Sentence);
-                //println!("заголовок: {}",&_s_sentence);
-                //вложение когда все буквы нижние
-                _word_find_vec.push(_s_lowercase);
-                //вложение когда 1-я буква заглавная
-                _word_find_vec.push(_s_sentence);
-            } else {
-                if !word_2.is_empty() {
-                    println!(
-                        "Ячейка в словаре (1 стр) искомых слов пустая, её номер: {}, но ячейка со словом-заменой содержит не пустое значение ",
-                        k
-                    );
-                }
-            }
-            //вложение замены
-            if !word_2.is_empty() {
-                //1-я буква нижняя
-                let _s_lowercase: String = word_2.to_case(Case::Lower);
-                //println!("нижний : {}",&_s_lowercase);
-                //1-я буква заглавная
-                let _s_sentence: String = word_2.to_case(Case::Sentence);
-                //println!("заголовок: {}",&_s_sentence);
-                //вложение когда все буквы нижние
-                _word_change_vec.push(_s_lowercase);
-                //вложение когда 1-я буква заглавная
-                _word_change_vec.push(_s_sentence);
-            } else {
-                if !word_1.is_empty() {
-                    println!(
-                        "Ячейка в словаре (1 стр) замен пустая, её номер: {} , но ячейка с искомым словом содержит не пустое значение",
-                        k
-                    );
-                }
-            }
-        }
-        //поиск уже добавленных слов
-        for i in 0.._all_word_find_vec.len() {
-            //второй круговорот
-            for j in i + 1.._all_word_find_vec.len() {
-                if _all_word_find_vec[i].as_str() == _all_word_find_vec[j].as_str() {
-                    println!(
-                        "слово в словаре (1 стр): |{}| уже добавлено. Номер строки 1){i} , 2){j}",
-                        &_all_word_find_vec[i]
-                    );
-                }
-            }
-        }
-        //проверка что количество слов равно
-        if _word_find_vec.len() != _word_change_vec.len() {
-            println!(
-                "Не равно количество слов (1 стр) искомых: {} и замен: {}",
-                _word_find_vec.len(),
-                _word_change_vec.len()
+            //извлечение слов , переделка их под заглавные буквы и маленькие
+            add_word_to_dictionary(
+                xlsx_row_value(&main_words, k, 0 as usize),
+                xlsx_row_value(&main_words, k, 1 as usize),
+                &mut _all_word_find_vec,
+                &mut _word_find_vec, //куда образцы слов вкладываются
+                &mut _word_change_vec,
+                1, //страница
+                k, //указатель ячейки
             );
         }
+        find_allready_words(
+            &mut _all_word_find_vec, // для сравнения
+            &mut _word_find_vec,     //куда образцы слов вкладываются
+            &mut _word_change_vec,   //куда замены вставляются
+            1,                       //номер страницы
+        );
         //если это 1 страница
         //вложение искомых слов
         _dictionary.single.extend(_word_find_vec);
@@ -143,76 +103,22 @@ pub fn import_dictionary(dictionary_path_vec: &Vec<String>) -> Vec<lib_1::Dictio
             let mut _word_change_vec: Vec<String> = Vec::new();
             //перебор всех слов
             for k in 0..last_row {
-                //запрос на слово искомое в строке
-                let word_1 = xlsx_row_value(&complex_words, k, 0 as usize);
-                //запрос на слово замены в строке
-                let word_2 = xlsx_row_value(&complex_words, k, 1 as usize);
-                //вложение искомого слова
-                if !word_1.is_empty() {
-                    //вложение в общий список для сравнения
-                    _all_word_find_vec.push(word_1.clone());
-                    //println!("изначально{}",&word_1);
-                    //все буквы нижние
-                    let _s_lowercase: String = word_1.to_case(Case::Lower);
-                    //println!("нижний : {}",&_s_lowercase);
-                    //1-я буква заглавная
-                    let _s_sentence: String = word_1.to_case(Case::Sentence);
-                    //println!("заголовок: {}",&_s_sentence);
-                    //вложение когда все буквы нижние
-                    _word_find_vec.push(_s_lowercase);
-                    //вложение когда 1-я буква заглавная
-                    _word_find_vec.push(_s_sentence);
-                } else {
-                    if !word_2.is_empty() {
-                        println!(
-                            "Ячейка в словаре (2 стр) искомых слов пустая, её номер: {}, но ячейка со словом-заменой содержит не пустое значение ",
-                            k
-                        );
-                    }
-                }
-                //вложение замены
-                if !word_2.is_empty() {
-                    //1-я буква нижняя
-                    let _s_lowercase: String = word_2.to_case(Case::Lower);
-                    //println!("нижний : {}",&_s_lowercase);
-                    //1-я буква заглавная
-                    let _s_sentence: String = word_2.to_case(Case::Sentence);
-                    //println!("заголовок: {}",&_s_sentence);
-                    //вложение когда все буквы нижние
-                    _word_change_vec.push(_s_lowercase);
-                    //вложение когда 1-я буква заглавная
-                    _word_change_vec.push(_s_sentence);
-                } else {
-                    if !word_1.is_empty() {
-                        println!(
-                            "Ячейка в словаре (2 стр) замен пустая, её номер: {} , но ячейка с искомым словом содержит не пустое значение",
-                            k
-                        );
-                    }
-                }
-            }
-            //поиск уже добавленных слов
-            for i in 0.._all_word_find_vec.len() {
-                //второй круговорот
-                for j in i + 1.._all_word_find_vec.len() {
-                    if _all_word_find_vec[i].as_str() == _all_word_find_vec[j].as_str() {
-                        println!(
-                            "слово в словаре (2 стр): |{}| уже добавлено. Номер строки 1){i} , 2){j}",
-                            &_all_word_find_vec[i]
-                        );
-                    }
-                }
-            }
-            //проверка что количество слов равно
-            if _word_find_vec.len() != _word_change_vec.len() {
-                println!(
-                    "Не равно количество слов (2 стр) искомых: {} и замен: {}",
-                    _word_find_vec.len(),
-                    _word_change_vec.len()
+                add_word_to_dictionary(
+                    xlsx_row_value(&complex_words, k, 0 as usize),
+                    xlsx_row_value(&complex_words, k, 1 as usize),
+                    &mut _all_word_find_vec,
+                    &mut _word_find_vec,
+                    &mut _word_change_vec,
+                    2, //страница
+                    k, //указатель ячейки
                 );
             }
-            //если это 1 страница
-            //if j==0 {
+            find_allready_words(
+                &mut _all_word_find_vec, // для сравнения
+                &mut _word_find_vec,     //куда образцы слов вкладываются
+                &mut _word_change_vec,   //куда замены вставляются
+                2,                       //номер страницы
+            );
             //вложение искомых слов
             _dictionary.complex.extend(_word_find_vec);
             //вложение замены
@@ -220,7 +126,7 @@ pub fn import_dictionary(dictionary_path_vec: &Vec<String>) -> Vec<lib_1::Dictio
             // }
         }
 
-         //третий лист
+        //третий лист
         let mut third_list_name: String = String::new();
         //если больше чем 1 страница
         if name_vec_sheets.len() >= 2 {
@@ -246,76 +152,22 @@ pub fn import_dictionary(dictionary_path_vec: &Vec<String>) -> Vec<lib_1::Dictio
             let mut _word_change_vec: Vec<String> = Vec::new();
             //перебор всех слов
             for k in 0..last_row {
-                //запрос на слово искомое в строке
-                let word_1 = xlsx_row_value(&everywhere_words, k, 0 as usize);
-                //запрос на слово замены в строке
-                let word_2 = xlsx_row_value(&everywhere_words, k, 1 as usize);
-                //вложение искомого слова
-                if !word_1.is_empty() {
-                    //вложение в общий список для сравнения
-                    _all_word_find_vec.push(word_1.clone());
-                    //println!("изначально{}",&word_1);
-                    //все буквы нижние
-                    let _s_lowercase: String = word_1.to_case(Case::Lower);
-                    //println!("нижний : {}",&_s_lowercase);
-                    //1-я буква заглавная
-                    let _s_sentence: String = word_1.to_case(Case::Sentence);
-                    //println!("заголовок: {}",&_s_sentence);
-                    //вложение когда все буквы нижние
-                    _word_find_vec.push(_s_lowercase);
-                    //вложение когда 1-я буква заглавная
-                    _word_find_vec.push(_s_sentence);
-                } else {
-                    if !word_2.is_empty() {
-                        println!(
-                            "Ячейка в словаре (3 стр) искомых слов пустая, её номер: {}, но ячейка со словом-заменой содержит не пустое значение ",
-                            k
-                        );
-                    }
-                }
-                //вложение замены
-                if !word_2.is_empty() {
-                    //1-я буква нижняя
-                    let _s_lowercase: String = word_2.to_case(Case::Lower);
-                    //println!("нижний : {}",&_s_lowercase);
-                    //1-я буква заглавная
-                    let _s_sentence: String = word_2.to_case(Case::Sentence);
-                    //println!("заголовок: {}",&_s_sentence);
-                    //вложение когда все буквы нижние
-                    _word_change_vec.push(_s_lowercase);
-                    //вложение когда 1-я буква заглавная
-                    _word_change_vec.push(_s_sentence);
-                } else {
-                    if !word_1.is_empty() {
-                        println!(
-                            "Ячейка в словаре (3 стр) замен пустая, её номер: {} , но ячейка с искомым словом содержит не пустое значение",
-                            k
-                        );
-                    }
-                }
-            }
-            //поиск уже добавленных слов
-            for i in 0.._all_word_find_vec.len() {
-                //третий круговорот
-                for j in i + 1.._all_word_find_vec.len() {
-                    if _all_word_find_vec[i].as_str() == _all_word_find_vec[j].as_str() {
-                        println!(
-                            "слово в словаре (3 стр): |{}| уже добавлено. Номер строки 1){i} , 2){j}",
-                            &_all_word_find_vec[i]
-                        );
-                    }
-                }
-            }
-            //проверка что количество слов равно
-            if _word_find_vec.len() != _word_change_vec.len() {
-                println!(
-                    "Не равно количество слов (3 стр) искомых: {} и замен: {}",
-                    _word_find_vec.len(),
-                    _word_change_vec.len()
+                add_word_to_dictionary(
+                    xlsx_row_value(&everywhere_words, k, 0 as usize),
+                    xlsx_row_value(&everywhere_words, k, 1 as usize),
+                    &mut _all_word_find_vec,
+                    &mut _word_find_vec,
+                    &mut _word_change_vec,
+                    3, //страница
+                    k, //указатель ячейки
                 );
             }
-            //если это 1 страница
-            //if j==0 {
+            find_allready_words(
+                &mut _all_word_find_vec, // для сравнения
+                &mut _word_find_vec,     //куда образцы слов вкладываются
+                &mut _word_change_vec,   //куда замены вставляются
+                3,                       //номер страницы
+            );
             //вложение искомых слов
             _dictionary.everywhere.extend(_word_find_vec);
             //вложение замены
@@ -323,8 +175,7 @@ pub fn import_dictionary(dictionary_path_vec: &Vec<String>) -> Vec<lib_1::Dictio
             // }
         }
 
-
-           //четвертый лист
+        //четвертый лист
         let mut four_list_name: String = String::new();
         //если больше или равно чем 4 страницы
         if name_vec_sheets.len() >= 3 {
@@ -341,7 +192,10 @@ pub fn import_dictionary(dictionary_path_vec: &Vec<String>) -> Vec<lib_1::Dictio
                 four_list.expect("не получилось открыть (4 стр) страницу в файле .xlsx ");
             //получение значения последней ячейки (строка)
             let last_row = everywhere_words.get_size().0;
-            println!("Последняя строка на (4 стр) странице в словаре: {}", &last_row);
+            println!(
+                "Последняя строка на (4 стр) странице в словаре: {}",
+                &last_row
+            );
             // для сравнения
             let mut _all_word_find_vec: Vec<String> = Vec::new();
             //куда образцы слов вкладываются
@@ -350,74 +204,22 @@ pub fn import_dictionary(dictionary_path_vec: &Vec<String>) -> Vec<lib_1::Dictio
             let mut _word_change_vec: Vec<String> = Vec::new();
             //перебор всех слов
             for k in 0..last_row {
-                //запрос на слово искомое в строке
-                let word_1 = xlsx_row_value(&everywhere_words, k, 0 as usize);
-                //запрос на слово замены в строке
-                let word_2 = xlsx_row_value(&everywhere_words, k, 1 as usize);
-                //вложение искомого слова
-                if !word_1.is_empty() {
-                    //вложение в общий список для сравнения
-                    _all_word_find_vec.push(word_1.clone());
-                    //println!("изначально{}",&word_1);
-                    //все буквы нижние
-                    let _s_lowercase: String = word_1.to_case(Case::Lower);
-                    //println!("нижний : {}",&_s_lowercase);
-                    //1-я буква заглавная
-                    let _s_sentence: String = word_1.to_case(Case::Sentence);
-                    //println!("заголовок: {}",&_s_sentence);
-                    //вложение когда все буквы нижние
-                    _word_find_vec.push(_s_lowercase);
-                    //вложение когда 1-я буква заглавная
-                    _word_find_vec.push(_s_sentence);
-                } else {
-                    if !word_2.is_empty() {
-                        println!(
-                            "Ячейка в словаре (4 стр) искомых слов пустая, её номер: {}, но ячейка со словом-заменой содержит не пустое значение ",
-                            k
-                        );
-                    }
-                }
-                //вложение замены
-                if !word_2.is_empty() {
-                    //1-я буква нижняя
-                    let _s_lowercase: String = word_2.to_case(Case::Lower);
-                    //println!("нижний : {}",&_s_lowercase);
-                    //1-я буква заглавная
-                    let _s_sentence: String = word_2.to_case(Case::Sentence);
-                    //println!("заголовок: {}",&_s_sentence);
-                    //вложение когда все буквы нижние
-                    _word_change_vec.push(_s_lowercase);
-                    //вложение когда 1-я буква заглавная
-                    _word_change_vec.push(_s_sentence);
-                } else {
-                    if !word_1.is_empty() {
-                        println!(
-                            "Ячейка в словаре (4 стр) замен пустая, её номер: {} , но ячейка с искомым словом содержит не пустое значение",
-                            k
-                        );
-                    }
-                }
-            }
-            //поиск уже добавленных слов
-            for i in 0.._all_word_find_vec.len() {
-                //четвертый круговорот
-                for j in i + 1.._all_word_find_vec.len() {
-                    if _all_word_find_vec[i].as_str() == _all_word_find_vec[j].as_str() {
-                        println!(
-                            "слово в словаре (4 стр): |{}| уже добавлено. Номер строки 1){i} , 2){j}",
-                            &_all_word_find_vec[i]
-                        );
-                    }
-                }
-            }
-            //проверка что количество слов равно
-            if _word_find_vec.len() != _word_change_vec.len() {
-                println!(
-                    "Не равно количество слов (4 стр) искомых: {} и замен: {}",
-                    _word_find_vec.len(),
-                    _word_change_vec.len()
+                add_word_to_dictionary(
+                    xlsx_row_value(&everywhere_words, k, 0 as usize),
+                    xlsx_row_value(&everywhere_words, k, 1 as usize),
+                    &mut _all_word_find_vec,
+                    &mut _word_find_vec,
+                    &mut _word_change_vec,
+                    4, //страница
+                    k, //указатель ячейки
                 );
             }
+            find_allready_words(
+                &mut _all_word_find_vec, // для сравнения
+                &mut _word_find_vec,     //куда образцы слов вкладываются
+                &mut _word_change_vec,   //куда замены вставляются
+                4,                       //номер страницы
+            );
             //вложение искомых слов
             _dictionary.complex_first.extend(_word_find_vec);
             //вложение замены
@@ -444,36 +246,36 @@ pub fn add_re_word_to_dictionary(
             //создание временной строки для искомого слова в соответствии с Regex требованиями (начало и конец слова должен быть)
             let _s: String = format!(r#"\<{}\>"#, dictionary_lib[i].single[j].clone());
             //создание Regex
-            let _re_time: Regex = Regex::new(&_s).unwrap();
+           // let _re_time: Regex = Regex::new(&_s).unwrap();
             //вложение в вектор искомых слов
-            dictionary_lib[i].re_single.push(_re_time);
+            dictionary_lib[i].re_single.push(Regex::new(&_s).unwrap());
         }
         //составные слова
         for j in 0..dictionary_lib[i].complex.len() {
             //создание временной строки для искомого слова в соответствии с Regex требованиями (начало и конец слова должен быть)
             let _s: String = format!(r#"({})"#, dictionary_lib[i].complex[j].clone());
             //создание Regex
-            let _re_time: Regex = Regex::new(&_s).unwrap();
+           // let _re_time: Regex = Regex::new(&_s).unwrap();
             //вложение в вектор искомых слов
-            dictionary_lib[i].re_complex.push(_re_time);
+            dictionary_lib[i].re_complex.push(Regex::new(&_s).unwrap());
         }
         //вездесущие слова
         for j in 0..dictionary_lib[i].everywhere.len() {
             //создание временной строки для искомого слова в соответствии с Regex требованиями (начало и конец слова должен быть)
             let _s: String = format!(r#"{}"#, dictionary_lib[i].everywhere[j].clone());
             //создание Regex
-            let _re_time: Regex = Regex::new(&_s).unwrap();
+           // let _re_time: Regex = Regex::new(&_s).unwrap();
             //вложение в вектор искомых слов
-            dictionary_lib[i].re_everywhere.push(_re_time);
+            dictionary_lib[i].re_everywhere.push(Regex::new(&_s).unwrap());
         }
         //составные слова
         for j in 0..dictionary_lib[i].complex_first.len() {
             //создание временной строки для искомого слова в соответствии с Regex требованиями (начало и конец слова должен быть)
             let _s: String = format!(r#"({})"#, dictionary_lib[i].complex_first[j].clone());
             //создание Regex
-            let _re_time: Regex = Regex::new(&_s).unwrap();
+           // let _re_time: Regex = Regex::new(&_s).unwrap();
             //вложение в вектор искомых слов
-            dictionary_lib[i].re_complex_first.push(_re_time);
+            dictionary_lib[i].re_complex_first.push(Regex::new(&_s).unwrap());
         }
         //вывод словаря
         let _ = write::excel_dictionary_write(&dictionary_lib);
@@ -493,4 +295,161 @@ pub fn xlsx_row_value(main_components: &calamine::Range<Data>, i: usize, j: usiz
     };
     // println!("excel:{}",&row_str);
     return row_str.trim().to_string();
+}
+//поиск знаков
+//если встречается знак в строке _ либо - , то заменить его на ∷
+pub fn find_spec_symbols_str(_exodus: &String) -> (String, Vec<char>) {
+    //вектор знаков под строку
+    let mut ch_vec: Vec<char> = _exodus.chars().collect();
+    //знак возврата
+    //∴ ∵ ∷
+    //пустой вектор под знаки
+    let mut exodus_char_vec: Vec<char> = Vec::new();
+    //по умолчанию знак
+    //let mut _exodus_char: char = '\x00';
+
+    //замена двоеточий внутри кавычек на особые знаки
+    for i in 0..ch_vec.len() {
+        // замена особых знаков
+        match ch_vec[i] {
+            '-' => {
+                exodus_char_vec.push('∴');
+                ch_vec[i] = '∴'
+            } // - меняет на ∴
+            '_' => {
+                exodus_char_vec.push('∵');
+                ch_vec[i] = '∵'
+            } // _ меняет на ∵
+            _ => (),
+        }
+    }
+    //вложение в строку всех знаков
+    return (ch_vec.into_iter().collect(), exodus_char_vec);
+}
+//обратно перевод знаков
+//если встречается знак в строке _ либо - , то заменить его на ∷
+pub fn change_spec_symbols_str(word_1: String,word_2:String,char_vec:Vec<char>) -> (String, String) {
+    //вектор знаков 1 слова 
+    let mut ch_vec_1: Vec<char> = word_1.chars().collect();
+     //вектор знаков 2 слова 
+    let mut ch_vec_2: Vec<char> = word_2.chars().collect();
+    //знак возврата
+    //∴ ∵ ∷
+    //по умолчанию знак
+    //замена двоеточий внутри кавычек на особые знаки
+    for i in 0..ch_vec_1.len() {
+        // замена особых знаков
+        match ch_vec_1[i] {
+            '∴' => {
+                ch_vec_1[i] = '-'
+            } // - меняет на ∴
+            '∵' => {
+                ch_vec_1[i] = '_'
+            } // _ меняет на ∵
+            _ => (),
+        }
+    }
+    //замена двоеточий внутри кавычек на особые знаки
+    for i in 0..ch_vec_2.len() {
+        // замена особых знаков
+        match ch_vec_2[i] {
+            '∴' => {
+                ch_vec_2[i] = '-'
+            } // - меняет на ∴
+            '∵' => {
+                ch_vec_2[i] = '_'
+            } // _ меняет на ∵
+            _ => (),
+        }
+    }
+//возврат слов
+    return (ch_vec_1.into_iter().collect(), ch_vec_2.into_iter().collect());
+}
+
+//добавление слов и замен словарь в большими и маленькими буквами
+pub fn add_word_to_dictionary(
+    word_1: String,                       //1-е слово (искомое)
+    word_2: String,                       //2-е слово (замена)
+    _all_word_find_vec: &mut Vec<String>, //общий список для сравнения
+    _word_find_vec: &mut Vec<String>, //все общее количество слов, где все буквы нижние и первая заглавная
+    _word_change_vec: &mut Vec<String>, //замены слов
+    number_list: usize,               //номер страницы
+    k: usize,                         //номер ячейки
+) {
+    //запрос на слово искомое в строке
+    //вложение искомого слова
+    if !word_1.is_empty() {
+        //вложение в общий список для сравнения
+        _all_word_find_vec.push(word_1.clone());
+        let tuple: (String, Vec<char>) = find_spec_symbols_str(&word_1);
+        //все буквы нижние
+        let _s_lowercase: String = tuple.0.to_case(Case::Lower);
+        //1-я буква заглавная
+        let _s_sentence: String =  tuple.0.to_case(Case::Sentence);
+        //упорядоченный ряд, где производится обратная замена - и _
+        let tuple =change_spec_symbols_str(_s_lowercase,_s_sentence,tuple.1);
+        //вложение когда все буквы нижние
+        _word_find_vec.push(tuple.0);
+        //вложение когда 1-я буква заглавная
+        _word_find_vec.push(tuple.1);
+    } else {
+        if !word_2.is_empty() {
+            println!(
+                "Ячейка в словаре ({} стр) искомых слов пустая, её номер: {}, но ячейка со словом-заменой содержит не пустое значение ",
+                number_list, k
+            );
+        }
+    }
+    //вложение замены
+    if !word_2.is_empty() {
+        //1-я буква нижняя
+        let tuple: (String, Vec<char>) = find_spec_symbols_str(&word_2);
+        //все буквы нижние
+        let _s_lowercase: String = tuple.0.to_case(Case::Lower);
+        //1-я буква заглавная
+        let _s_sentence: String =  tuple.0.to_case(Case::Sentence);
+        //упорядоченный ряд, где производится обратная замена - и _
+        let tuple =change_spec_symbols_str(_s_lowercase.clone(),_s_sentence.clone(),tuple.1);
+        //вложение когда все буквы нижние
+        _word_change_vec.push(tuple.0);
+        //вложение когда 1-я буква заглавная
+        _word_change_vec.push(tuple.1);
+
+    } else {
+        if !word_1.is_empty() {
+            println!(
+                "Ячейка в словаре ({} стр) замен пустая, её номер: {} , но ячейка с искомым словом содержит не пустое значение",
+                number_list, k
+            );
+        }
+    }
+}
+
+pub fn find_allready_words(
+    _all_word_find_vec: &Vec<String>, // для сравнения
+    _word_find_vec: &Vec<String>,     //куда образцы слов вкладываются
+    _word_change_vec: &Vec<String>,   //куда замены вставляются
+    number_list: usize,               //номер страницы
+) {
+    //поиск уже добавленных слов
+    for i in 0.._all_word_find_vec.len() {
+        //второй круговорот
+        for j in i + 1.._all_word_find_vec.len() {
+            if _all_word_find_vec[i].as_str() == _all_word_find_vec[j].as_str() {
+                println!(
+                    "слово в словаре ({} стр): |{}| уже добавлено. Номер строки 1){i} , 2){j}",
+                    number_list, &_all_word_find_vec[i]
+                );
+            }
+        }
+    }
+    //проверка что количество слов равно
+    if _word_find_vec.len() != _word_change_vec.len() {
+        println!(
+            "Не равно количество слов ({} стр) искомых: {} и замен: {}",
+            number_list,
+            _word_find_vec.len(),
+            _word_change_vec.len()
+        );
+    }
 }

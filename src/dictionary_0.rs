@@ -1,4 +1,4 @@
-﻿//use std::default;
+//use std::default;
 
 use crate::lib_1::{self, Dictionary};
 //use lazy_static::lazy_static;
@@ -20,7 +20,7 @@ pub fn change_words_in_books(
     //замена - одиночные
     let mut change_single_word: Vec<String> = Vec::new();
 
-     //изначальные слова сложные
+    //изначальные слова сложные
     let mut complex_word: Vec<String> = Vec::new();
     //составные слова Regex
     let mut re_complex: Vec<Regex> = Vec::new();
@@ -34,7 +34,7 @@ pub fn change_words_in_books(
     //замена - множественные
     let mut change_everywhere_word: Vec<String> = Vec::new();
 
-     //изначальные слова сложные
+    //изначальные слова сложные
     let mut complex_first_word: Vec<String> = Vec::new();
     //составные слова Regex
     let mut re_complex_first: Vec<Regex> = Vec::new();
@@ -56,7 +56,7 @@ pub fn change_words_in_books(
             change_everywhere_word.push(dictionary_lib[i].change_everywhere[j].clone());
         }
 
-         //составные слова
+        //составные слова
         for j in 0..dictionary_lib[i].complex.len() {
             //вложение в вектор искомых слов
             re_complex.push(dictionary_lib[i].re_complex[j].clone());
@@ -66,7 +66,7 @@ pub fn change_words_in_books(
             change_complex_word.push(dictionary_lib[i].change_complex[j].clone());
         }
 
-         //составные слова (в 1 очередь)
+        //составные слова (в 1 очередь)
         for j in 0..dictionary_lib[i].complex_first.len() {
             //вложение в вектор искомых слов
             re_complex_first.push(dictionary_lib[i].re_complex_first[j].clone());
@@ -85,7 +85,6 @@ pub fn change_words_in_books(
             //вложение замен
             change_single_word.push(dictionary_lib[i].change_single[j].clone());
         }
-       
     }
 
     //начало замены слов
@@ -95,7 +94,6 @@ pub fn change_words_in_books(
         let mut _time_content: Vec<String> = books_struct_original[i].content.clone();
         //перебор всего содержимого
 
-
         //сначала меняются 1)составные (в 1 очередь), 2)вездесущие; 3)сложные слова 4)простые
         for j in 0.._time_content.len() {
             //перебор искомых слов в виде RegEx
@@ -104,8 +102,8 @@ pub fn change_words_in_books(
             for k in 0..re_complex_first.len() {
                 if re_complex_first[k].is_match(&_time_content[j]) {
                     //вложение замены во временную переменную
-                    let _s: std::borrow::Cow<'_, str> =
-                        re_complex_first[k].replace_all(&_time_content[j], &change_complex_first_word[k]);
+                    let _s: std::borrow::Cow<'_, str> = re_complex_first[k]
+                        .replace_all(&_time_content[j], &change_complex_first_word[k]);
                     _time_content[j] = _s.to_string();
                 }
             }

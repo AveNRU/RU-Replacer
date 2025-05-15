@@ -12,21 +12,21 @@ pub struct Books {
 //словарь
 #[derive(Debug, Default, Clone)]
 pub struct Dictionary {
-    pub path: String,                //путь до книги
-    pub name: String,                //имя книги
-    pub format: String,              //формат
-    pub single: Vec<String>,         //одиночные слова
-    pub re_single: Vec<Regex>,       //одиночные слова Regex
-    pub change_single: Vec<String>,  //замена одиночные слова
-    pub complex: Vec<String>,        //сложные и составные
-    pub re_complex: Vec<Regex>,      //сложные и составные Regex
-    pub change_complex: Vec<String>, //сложные и составные
+    pub path: String,                      //путь до книги
+    pub name: String,                      //имя книги
+    pub format: String,                    //формат
+    pub single: Vec<String>,               //одиночные слова
+    pub re_single: Vec<Regex>,             //одиночные слова Regex
+    pub change_single: Vec<String>,        //замена одиночные слова
+    pub complex: Vec<String>,              //сложные и составные
+    pub re_complex: Vec<Regex>,            //сложные и составные Regex
+    pub change_complex: Vec<String>,       //сложные и составные
     pub complex_first: Vec<String>,        //сложные и составные (в 1 очередь)
     pub re_complex_first: Vec<Regex>,      //сложные и составные Regex (в 1 очередь)
     pub change_complex_first: Vec<String>, //сложные и составные (в 1 очередь)
-    pub everywhere: Vec<String>,        //сложные и составные
-    pub re_everywhere: Vec<Regex>,      //сложные и составные Regex
-    pub change_everywhere: Vec<String>, //сложные и составные
+    pub everywhere: Vec<String>,           //сложные и составные
+    pub re_everywhere: Vec<Regex>,         //сложные и составные Regex
+    pub change_everywhere: Vec<String>,    //сложные и составные
 }
 
 //случаи замены

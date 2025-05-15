@@ -24,6 +24,8 @@ use regex::Regex;
 lazy_static! {
     static ref re_file_extension: Regex = Regex::new(r"(?:\.)+([\d\w&&[^\.]]+)$").unwrap();//расширение файла
     static ref re_file_name: Regex = Regex::new(r"\.\\*/*books\\*/*(.+)\.(?:[\d\w&&[^\.]]+)").unwrap();//расширение файла
+     //имя словаря вырезать
+    static ref re_name_book:Regex = Regex::new(r"(?i)([\d\w\_-]+)\.(?:([\d\w]+))$").unwrap();
 }
 
 pub fn read_books() -> Vec<lib_1::Books> {
@@ -78,7 +80,7 @@ pub fn read_catalogs() -> (Vec<lib_1::Books>, Vec<String>) {
         //имя файла
         let mut _filename: String = String::new();
         //получение расширения файла
-        if let Some(extension) = re_file_name.captures(&books_vec[i]) {
+        if let Some(extension) = re_name_book.captures(&books_vec[i]) {
             //присвоение расширения
             _filename = extension[1].trim().to_string();
             //если не удалось получить расширенеи файла
