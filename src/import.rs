@@ -25,7 +25,10 @@ lazy_static! {
     static ref re_file_extension: Regex = Regex::new(r"(?:\.)+([\d\w&&[^\.]]+)$").unwrap();//расширение файла
     static ref re_file_name: Regex = Regex::new(r"\.\\*/*books\\*/*(.+)\.(?:[\d\w&&[^\.]]+)").unwrap();//расширение файла
      //имя словаря вырезать
-    static ref re_name_book:Regex = Regex::new(r"(?i)([\d\w\_-]+)\.(?:([\d\w]+))$").unwrap();
+    static ref re_name_book_vec:Vec<Regex> = vec![
+        Regex::new(r"(?i)books/([\d\w_\-\s\.,]+)\.(?:([\d\w]+))$").unwrap(),
+        Regex::new(r"(?i)books\\([\d\w_\-\s\.,]+)\.(?:([\d\w]+))$").unwrap(),
+    ];
 }
 
 pub fn read_books() -> Vec<lib_1::Books> {
@@ -80,13 +83,17 @@ pub fn read_catalogs() -> (Vec<lib_1::Books>, Vec<String>) {
         //имя файла
         let mut _filename: String = String::new();
         //получение расширения файла
-        if let Some(extension) = re_name_book.captures(&books_vec[i]) {
+        for k in 0..re_name_book_vec.len() {
+        if let Some(extension) = re_name_book_vec[k].captures(&books_vec[i]) {
             //присвоение расширения
             _filename = extension[1].trim().to_string();
             //если не удалось получить расширенеи файла
-        } else {
+        } 
+    }
+    if _filename.is_empty() {
             panic!("Не удалось выдрать имя файла: {}", &books_vec[i]);
         }
+    
         //println!("сама книга: {}",&books_vec[i]);
         //println!("Расширение: {}",& _extension);
         // let _s1=books_vec[i].replace(".", ""));

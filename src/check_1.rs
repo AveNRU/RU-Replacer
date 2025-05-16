@@ -8,7 +8,7 @@ pub fn check_file_exists_1() {
     let mut path_vec: Vec<Vec<String>> = vec![
         vec![
             //test
-            "./book".to_string(),
+            "./books".to_string(),
             "./dictionary".to_string(),
             "./end".to_string(),
             "./end/dictionary".to_string(),
