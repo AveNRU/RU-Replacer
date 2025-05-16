@@ -28,8 +28,8 @@ fn main() {
     //словарь со словами в виде заглвных букв и маленьких
     let dictionary_lib: Vec<Dictionary> = import_xls::import_dictionary(&dictionary_path_vec);
     //книги изменённые
-   /*  let books_struct_changed: Vec<lib_1::Books> =
+    let books_struct_changed: Vec<lib_1::Books> =
         dictionary_0::change_words_in_books(&dictionary_lib, &books_struct_original);
     let _ = write::write_book(&books_struct_changed);
-    */
+    
 }

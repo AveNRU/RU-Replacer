@@ -6,19 +6,29 @@ use regex::Regex;
 //загрузка словаря
 pub fn import_dictionary(dictionary_path_vec: &Vec<String>) -> Vec<lib_1::Dictionary> {
     //имя словаря вырезать
-    let re_name_dictionary = Regex::new(r"(?i)([\d\w]+)\.(?:([\d\w_-]+))$").unwrap();
+
+    let re_name_dictionary_vec:Vec<Regex> = vec![
+        Regex::new(r"(?i)\\([\d\w\s]+)\.(?:([\d\w_-]+))$").unwrap(),
+        Regex::new(r"(?i)/([\d\w\s]+)\.(?:([\d\w_-]+))$").unwrap(),
+        ];
     //итоговая стопка
     let mut _dictionary_vec: Vec<lib_1::Dictionary> = Vec::new();
     for i in 0..dictionary_path_vec.len() {
+        
         //пустая строка под имя словаря
         let mut _name_dictionary:String=String::new();
-        if let Some(caps) = re_name_dictionary.captures(&&dictionary_path_vec[i]) {
+        //перебор устойчивых образцов
+        for k in 0..re_name_dictionary_vec.len() {
+        //если успешно выделение имени файла
+        if let Some(caps) = re_name_dictionary_vec[k].captures(&&dictionary_path_vec[i]) {
                 _name_dictionary = caps[1].trim().to_string();
                 //println!("refdes1");
             } else {
                 _name_dictionary=format!("Словарь_№_{}",i);
             }
-
+        }
+        //вывод имени словаря
+        println!("Словарь №{i}: {}",&_name_dictionary);
         //пустая стопка
         let mut _dictionary: lib_1::Dictionary = Dictionary {
             path: dictionary_path_vec[i].clone(), //путь
@@ -277,8 +287,8 @@ pub fn add_re_word_to_dictionary(
             //вложение в вектор искомых слов
             dictionary_lib[i].re_complex_first.push(Regex::new(&_s).unwrap());
         }
-        //вывод словаря
-        let _ = write::excel_dictionary_write(&dictionary_lib);
+        //вывод каждого по отдельности словаря
+        //let _ = write::excel_dictionary_write(&dictionary_lib);
     }
 
     return _dictionary_vec;
